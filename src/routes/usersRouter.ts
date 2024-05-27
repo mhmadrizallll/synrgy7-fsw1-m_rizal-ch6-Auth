@@ -3,6 +3,7 @@ import {
   addUsers,
   deleteUsers,
   getUsers,
+  getUsersByName,
   loginUser,
   registerUsers,
   updateUsers,
@@ -10,6 +11,7 @@ import {
 } from "../controllers/usersControllers";
 const router = express.Router();
 
+router.get("/search", getUsersByName);
 router.get("/", getUsers);
 // register
 router.post("/register", registerUsers);

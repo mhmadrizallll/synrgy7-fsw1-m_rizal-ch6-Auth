@@ -58,6 +58,20 @@ const getUsers = async (req: Request, res: Response) => {
   res.status(200).json({ data: users });
 };
 
+const getUsersByName = async (req: Request, res: Response) => {
+  try {
+    const name = req.query.name;
+    const user = await UsersModel.query().findOne({ name });
+    if (!user) {
+      res.status(400).json({ status: false, message: "User not found" });
+    }
+    res.status(200).json({ status: true, data: user });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ status: false, message: err });
+  }
+};
+
 const addUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, password, role } = req.body;
@@ -134,6 +148,7 @@ const deleteUsers = async (req: Request, res: Response): Promise<void> => {
 export {
   registerUsers,
   getUsers,
+  getUsersByName,
   addUsers,
   updateUsers,
   deleteUsers,

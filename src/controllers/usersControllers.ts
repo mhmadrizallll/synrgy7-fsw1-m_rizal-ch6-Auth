@@ -16,6 +16,18 @@ const encryptPassword = (password: string) => {
   });
 };
 
+const checkPassword = (encryptPassword: string, password: string) => {
+  return new Promise((resolve, reject) => {
+    bcrypt.compare(password, encryptPassword, (err, result) => {
+      if (!!err) {
+        reject(err);
+        return;
+      }
+      resolve(result);
+    });
+  });
+};
+
 const registerUsers = async (req: Request, res: Response) => {
   try {
     const payload = {
@@ -23,6 +35,13 @@ const registerUsers = async (req: Request, res: Response) => {
       password: await encryptPassword(req.body.password),
       id: v4(),
     };
+
+    const user = await UsersModel.query().findOne({ name: payload.name });
+    if (user) {
+      return res
+        .status(400)
+        .json({ status: false, message: "User already exists" });
+    }
 
     await UsersModel.query().insert(payload);
     res
@@ -60,15 +79,27 @@ const viewLogin = async (req: Request, res: Response) => {
   res.status(200).render("index");
 };
 const loginUser = async (req: Request, res: Response): Promise<void> => {
-  const { name, password } = req.body;
   try {
-    const user = await UsersModel.query().findOne({ name, password });
-    if (!user) res.status(404).json({ message: "User not found" });
-    // res.status(200).json({ message: "Login successful", data: user });
-    res.status(200).render("dashboard", { data: user });
+    const { name, password } = req.body;
+
+    const user = await UsersModel.query().findOne({ name });
+
+    if (!user) {
+      res.status(400).json({ status: false, message: "User not found" });
+    } else {
+      const isPasswordCorrect = await checkPassword(user.password, password);
+
+      if (!isPasswordCorrect) {
+        res.status(400).json({ status: false, message: "Wrong password" });
+      } else {
+        res
+          .status(200)
+          .json({ status: true, message: "Login successful", data: user });
+      }
+    }
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: err });
+    res.status(500).json({ status: false, message: err });
   }
 };
 

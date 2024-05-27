@@ -27,9 +27,26 @@ const encryptPassword = (password) => {
         });
     });
 };
+const checkPassword = (encryptPassword, password) => {
+    return new Promise((resolve, reject) => {
+        bcrypt_1.default.compare(password, encryptPassword, (err, result) => {
+            if (!!err) {
+                reject(err);
+                return;
+            }
+            resolve(result);
+        });
+    });
+};
 const registerUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const payload = Object.assign(Object.assign({}, req.body), { password: yield encryptPassword(req.body.password), id: (0, uuid_1.v4)() });
+        const user = yield users_model_1.UsersModel.query().findOne({ name: payload.name });
+        if (user) {
+            return res
+                .status(400)
+                .json({ status: false, message: "User already exists" });
+        }
         yield users_model_1.UsersModel.query().insert(payload);
         res
             .status(201)
@@ -68,17 +85,27 @@ const viewLogin = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.viewLogin = viewLogin;
 const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { name, password } = req.body;
     try {
-        const user = yield users_model_1.UsersModel.query().findOne({ name, password });
-        if (!user)
-            res.status(404).json({ message: "User not found" });
-        // res.status(200).json({ message: "Login successful", data: user });
-        res.status(200).render("dashboard", { data: user });
+        const { name, password } = req.body;
+        const user = yield users_model_1.UsersModel.query().findOne({ name });
+        if (!user) {
+            res.status(400).json({ status: false, message: "User not found" });
+        }
+        else {
+            const isPasswordCorrect = yield checkPassword(user.password, password);
+            if (!isPasswordCorrect) {
+                res.status(400).json({ status: false, message: "Wrong password" });
+            }
+            else {
+                res
+                    .status(200)
+                    .json({ status: true, message: "Login successful", data: user });
+            }
+        }
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ message: err });
+        res.status(500).json({ status: false, message: err });
     }
 });
 exports.loginUser = loginUser;

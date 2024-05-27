@@ -8,7 +8,7 @@ const usersControllers_1 = require("../controllers/usersControllers");
 const router = express_1.default.Router();
 router.get("/", usersControllers_1.getUsers);
 // register
-router.post("/", usersControllers_1.registerUsers);
+router.post("/register", usersControllers_1.registerUsers);
 // router.post("/", addUsers);
 router.get("/login", usersControllers_1.viewLogin);
 router.post("/login", usersControllers_1.loginUser);

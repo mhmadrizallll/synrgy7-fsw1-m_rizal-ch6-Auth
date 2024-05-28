@@ -4,6 +4,7 @@ import { InvoicesModel } from "./invoices.model";
 export class UsersModel extends Model {
   id!: string;
   name!: string;
+  email!: string;
   password!: string;
   role!: string;
 

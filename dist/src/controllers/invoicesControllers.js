@@ -8,37 +8,66 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentInvoice = exports.createInvoice = void 0;
+exports.getPayment = exports.paymentInvoice = exports.createInvoice = void 0;
 const invoices_model_1 = require("../models/invoices.model");
+const uuid_1 = require("uuid");
+const getPayment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const invoices = yield invoices_model_1.InvoicesModel.query().select("id", "name", "amount", "status");
+        res.status(200).json({ data: invoices });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(500).json({ status: false, message: err });
+    }
+});
+exports.getPayment = getPayment;
 const createInvoice = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { user_id, name, amount, status } = req.body;
+        const { name, amount, status } = req.body;
         const invoice = yield invoices_model_1.InvoicesModel.query().insert({
-            user_id,
+            id: (0, uuid_1.v4)(),
+            user_id: (0, uuid_1.v4)(),
             name,
             amount,
             status,
         });
-        res.status(201).json({ data: invoice });
+        const { user_id } = invoice, invoices = __rest(invoice, ["user_id"]);
+        res.status(201).json({ status: true, data: invoices });
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ message: err });
+        res.status(500).json({ status: false, message: err });
     }
 });
 exports.createInvoice = createInvoice;
 const paymentInvoice = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const invoice = yield invoices_model_1.InvoicesModel.query().patchAndFetchById(id, {
+        const invoice = yield invoices_model_1.InvoicesModel.query()
+            .patchAndFetchById(id, {
             status: "paid",
-        });
-        res.status(200).json({ message: "Invoice paid", data: invoice });
+        })
+            .select("id", "name", "amount", "status");
+        res
+            .status(200)
+            .json({ status: true, message: "Invoice paid", data: invoice });
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ message: err });
+        res.status(500).json({ status: false, message: err });
     }
 });
 exports.paymentInvoice = paymentInvoice;
